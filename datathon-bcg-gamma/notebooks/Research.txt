@@ -1,0 +1,27 @@
+Documentation research : 
+
+    urls : 
+        https://www.altexsoft.com/blog/traffic-prediction/
+        https://paperswithcode.com/task/traffic-prediction/codeless
+        https://odr.chalmers.se/server/api/core/bitstreams/0efd210a-6d0f-49a7-88c6-2fea831b2c51/content #Document scientifique sur le sujet
+    Algos :
+        Statistical Approach : auto-regressive integrated moving average
+        ML : 
+            Random Forrest
+            K nearest 
+            Meta-Graph Convolutional Recurrent Network
+                Url : 
+            Correlation Information-based Spatiotemporal Network for Traffic Flow Forecasting (CorrSTN)
+                Url : 
+            A Spatio-Temporal U-Network for Graph-structured Time Series Modeling (ST-UNet)
+                Url : 
+            Spatial-Temporal Interactive Dynamic Graph Convolution Network for Traffic Forecasting (STIDGCN)
+                Url : https://github.com/LiuAoyu1998/STIDGCN
+        
+
+        Idées : 
+            Supprimer les vacances dans un premier temps 
+            ++ Utiliser les données des autres segments qui donnent sur les route (DATA LEAKAGE)
+            Il faut regarder les performances des algos sur plusieurs échelle de temps : (Prediction dans 1 heures / 2 heures / 24 heures )
+
+Q&A 
