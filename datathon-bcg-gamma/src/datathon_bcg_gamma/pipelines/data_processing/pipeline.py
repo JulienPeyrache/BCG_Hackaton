@@ -49,4 +49,24 @@ def create_pipeline(**kwargs) -> Pipeline:
             inputs=['data_jours_feries','df_convention_days_meteo'],
             outputs='df_convention_days_meteo_bank'
         ),
+        node(
+            func = add_days,
+            inputs="data_peres",
+            outputs="peres_with_days"
+        ),
+        node(
+            func=replace_na,
+            inputs="peres_with_days",
+            outputs = "peres_with_days_na_filled"
+        ),
+        node(
+            func=attach_meteo,
+            inputs=['data_meteo','peres_with_days_na_filled'],
+            outputs='df_peres_days_meteo'
+        ),
+        node(
+            func=add_jours_f,
+            inputs=['data_jours_feries','df_peres_days_meteo'],
+            outputs='df_peres_days_meteo_bank'
+        ),
     ])
