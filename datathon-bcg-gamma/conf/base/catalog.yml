@@ -18,6 +18,10 @@ champs_elysee_with_days:
   type: pandas.ParquetDataSet
   filepath: data/02_intermediate/champs_elysee_with_days.pq
 
+champs_elysee_with_days_na_filled:
+  type: pandas.ParquetDataSet
+  filepath: data/02_intermediate/champs_elysee_with_days_na_filled.pq
+
 df_champs_elysee_days_meteo:
   type: pandas.ParquetDataSet
   filepath: data/02_intermediate/df_champs_elysee_days_meteo.pq

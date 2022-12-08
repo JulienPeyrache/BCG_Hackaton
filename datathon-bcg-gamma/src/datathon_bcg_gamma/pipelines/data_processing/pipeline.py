@@ -5,7 +5,7 @@ generated using Kedro 0.18.3
 
 from kedro.pipeline import Pipeline, node, pipeline
 
-from .nodes import add_days, attach_meteo, add_jours_f
+from .nodes import add_days, replace_na, attach_meteo, add_jours_f
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
@@ -15,8 +15,13 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs="champs_elysee_with_days"
         ),
         node(
+            func=replace_na,
+            inputs="champs_elysee_with_days",
+            outputs = "champs_elysee_with_days_na_filled"
+        ),
+        node(
             func=attach_meteo,
-            inputs=['data_meteo','champs_elysee_with_days'],
+            inputs=['data_meteo','champs_elysee_with_days_na_filled'],
             outputs='df_champs_elysee_days_meteo'
         ),
         node(

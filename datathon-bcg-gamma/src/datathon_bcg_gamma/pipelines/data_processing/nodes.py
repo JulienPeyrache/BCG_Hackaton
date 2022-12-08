@@ -1,6 +1,10 @@
 import pandas as pd 
 from pandas.api.types import CategoricalDtype
 from sklearn.preprocessing import LabelEncoder
+from sklearn.impute import KNNImputer
+from sklearn.preprocessing import MinMaxScaler
+import random
+
 
 
 def add_days (data_road_row :pd.DataFrame) -> pd.DataFrame:
@@ -32,6 +36,60 @@ def add_days (data_road_row :pd.DataFrame) -> pd.DataFrame:
     data_road_row = data_road_row.drop('index',axis = 1)
     data_road_row = data_road_row.drop(columns=['Identifiant arc','Etat arc','Etat trafic','Identifiant noeud amont','Libelle noeud amont','Identifiant noeud aval','Libelle noeud aval','Date debut dispo data','Date fin dispo data','geo_point_2d','geo_shape'])
     return data_road_row
+
+# def impute(data_):
+#     #Define a subset of the dataset
+#     data = data_.copy()
+#     df_knn = data.filter(['hour','day','month','year','day_of_week_2', 'Débit horaire', "Taux d'occupation"]).copy()
+
+#     # Define scaler to set values between 0 and 1
+#     scaler = MinMaxScaler(feature_range=(0, 1))
+#     df_knn = pd.DataFrame(scaler.fit_transform(df_knn), columns = df_knn.columns)
+
+#     # Define KNN imputer and fill missing values
+#     knn_imputer = KNNImputer(n_neighbors=2, weights='uniform', metric ='nan_euclidean')
+#     df_knn_imputed = pd.DataFrame(knn_imputer.fit_transform(df_knn), columns=df_knn.columns)
+#     inversed = pd.DataFrame(scaler.inverse_transform(df_knn_imputed))
+#     data_['filled_tx_occup'] = inversed[5]
+#     data_['filled_debit'] = inversed[4]
+
+#     return data_
+
+
+# def impute(data_:pd.DataFrame,n:int) -> pd.DataFrame:
+#     #Define a subset of the dataset
+#     name_hour = ['hour_%d' % (i) for i in range(0,24) ]
+#     name_month = ['day_%d' % (i) for i in range(1,32) ]
+#     data = data_.copy()
+#     df_knn = data.filter(['Débit horaire', "Taux d'occupation"] + name_hour).copy()
+
+#     # Define scaler to set values between 0 and 1
+#     scaler = MinMaxScaler(feature_range=(0, 1))
+#     df_knn = pd.DataFrame(scaler.fit_transform(df_knn), columns = df_knn.columns)
+
+#     # Define KNN imputer and fill missing values
+#     knn_imputer = KNNImputer(n_neighbors=n, weights='distance', metric ='nan_euclidean')
+#     df_knn_imputed = pd.DataFrame(knn_imputer.fit_transform(df_knn), columns=df_knn.columns)
+#     inversed = pd.DataFrame(scaler.inverse_transform(df_knn_imputed))
+
+#     data['filled_tx_occup'] = inversed[1]
+#     data['filled_debit'] = inversed[0]
+#     return data
+
+def replace_na (data) : 
+    index_taux = data.loc[data["Taux d'occupation"].isna()].index
+    index_debit = data.loc[data["Débit horaire"].isna()].index
+    mean = data.groupby(['day_of_week', 'hour'])[["Débit horaire","Taux d'occupation"]].mean().unstack()
+    for idx_t in index_debit:
+        data.loc[idx_t,'Débit horaire'] = mean.loc[data.loc[idx_t,'day_of_week'], 'Débit horaire'][data.loc[idx_t,'hour']] 
+    for idx_d in index_taux:
+        data.loc[idx_d,"Taux d'occupation"] = mean.loc[data.loc[idx_d,'day_of_week'], "Taux d'occupation"][data.loc[idx_d,'hour']] 
+    return data
+
+# def replace_na (data :pd.DataFrame) -> pd.DataFrame:
+
+#     data.groupby(['day_of_week', 'hour'])[['']].mean()
+
 
 def attach_meteo(data_meteo:pd.DataFrame, df:pd.DataFrame) -> pd.DataFrame:
     data_meteo['DATE'] = pd.to_datetime(data_meteo['DATE'])
