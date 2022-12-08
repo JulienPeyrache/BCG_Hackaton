@@ -3,6 +3,12 @@ data_champs_elysee:
   filepath: data/01_raw/data-champs-elysee.csv
   load_args:
     sep: ";"
+
+data_convention:
+  type: pandas.CSVDataSet
+  filepath: data/01_raw/data-convention.csv
+  load_args:
+    sep: ";"
   
 data_meteo:
   type: pandas.CSVDataSet
@@ -18,14 +24,30 @@ champs_elysee_with_days:
   type: pandas.ParquetDataSet
   filepath: data/02_intermediate/champs_elysee_with_days.pq
 
+convention_with_days:
+  type: pandas.ParquetDataSet
+  filepath: data/02_intermediate/convention_with_days.pq
+
 champs_elysee_with_days_na_filled:
   type: pandas.ParquetDataSet
   filepath: data/02_intermediate/champs_elysee_with_days_na_filled.pq
+
+convention_with_days_na_filled:
+  type: pandas.ParquetDataSet
+  filepath: data/02_intermediate/convention_with_days_na_filled.pq
 
 df_champs_elysee_days_meteo:
   type: pandas.ParquetDataSet
   filepath: data/02_intermediate/df_champs_elysee_days_meteo.pq
 
+df_convention_days_meteo:
+  type: pandas.ParquetDataSet
+  filepath: data/02_intermediate/df_convention_days_meteo.pq
+
 df_champs_elysee_days_meteo_bank:
   type: pandas.ParquetDataSet
   filepath: data/02_intermediate/df_champs_elysee_days_meteo_bank.pq
+
+df_convention_days_meteo_bank:
+  type: pandas.ParquetDataSet
+  filepath: data/02_intermediate/df_convention_days_meteo_bank.pq

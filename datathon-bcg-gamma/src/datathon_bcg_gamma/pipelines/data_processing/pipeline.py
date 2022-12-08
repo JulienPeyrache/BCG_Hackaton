@@ -28,5 +28,25 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=add_jours_f,
             inputs=['data_jours_feries','df_champs_elysee_days_meteo'],
             outputs='df_champs_elysee_days_meteo_bank'
-        )
+        ),
+        node(
+            func = add_days,
+            inputs="data_convention",
+            outputs="convention_with_days"
+        ),
+        node(
+            func=replace_na,
+            inputs="convention_with_days",
+            outputs = "convention_with_days_na_filled"
+        ),
+        node(
+            func=attach_meteo,
+            inputs=['data_meteo','convention_with_days_na_filled'],
+            outputs='df_convention_days_meteo'
+        ),
+        node(
+            func=add_jours_f,
+            inputs=['data_jours_feries','df_convention_days_meteo'],
+            outputs='df_convention_days_meteo_bank'
+        ),
     ])
