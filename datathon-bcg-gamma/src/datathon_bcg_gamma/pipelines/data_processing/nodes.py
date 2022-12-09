@@ -6,6 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 import random
 from sklearn.model_selection import train_test_split
 from typing import Dict, Tuple
+import datetime
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
@@ -244,6 +245,7 @@ def _create_pipeline(num_col, min_max_col):
 
 def prepare_input_for_model(df_model:pd.DataFrame, n_past_values:int):
     df_fenetrage = _input_to_supervised(df_model, n_past_values, dropnan=False)
+    date = df_fenetrage['Date et heure de comptage']
     df_fenetrage = df_fenetrage.drop(
         columns=["Taux d'occupation", "Débit horaire", 'Libelle', 'Date et heure de comptage', 'date'])
     min_max_columns_n = ['vacances', 'est_ferie', 'year_2021', 'year_2022', 'hour_0', 'hour_1', 'hour_2', 'hour_3',
@@ -259,7 +261,7 @@ def prepare_input_for_model(df_model:pd.DataFrame, n_past_values:int):
     numerical_col_n = [feature for feature in list(df_fenetrage) if feature not in min_max_columns_n]
     pipeline_n = _create_pipeline(numerical_col_n, min_max_columns_n)
     input = pipeline_n.fit_transform(df_fenetrage)
-    return input
+    return input, date
 
 
 def prepare_data_for_model_taux(df_model:pd.DataFrame, n_past_values:int,n_output:int) -> Tuple:
@@ -280,6 +282,25 @@ def prepare_data_for_model_taux(df_model:pd.DataFrame, n_past_values:int,n_outpu
     X_test_preprocessed = pipeline_n.transform(X_test)
     return X_train_preprocessed, X_test_preprocessed, y_train_normalize, y_train, y_test
 
+def reconstruct_output(output_taux, output_debit, date, arc):
+    if len(np.shape(output_taux)) > 1:
+        output_taux= pd.DataFrame(output_taux[-1])
+        output_debit = pd.DataFrame(output_debit[-1])
+        date = date.iloc[-1]
+    hour = date.hour
+    day = date.day
+    month =date.month
+    year = date.year
+    dt_ref = datetime.datetime.combine(datetime.date(year=year, month=month, day=day),
+                                       datetime.time(hour=hour, minute=0, second=0))
+    dt_ref += datetime.timedelta(hours=1)
+
+    start = pd.to_datetime(dt_ref)
+    date = pd.DataFrame(pd.date_range(start, periods=120, freq='1H'))
+    df = pd.concat((date, output_debit, output_taux), axis=1)
+    df.columns = ['datetime', 'debit_horraire' ,'taux_occupation']
+    df['arc'] = arc
+    return df
 
 
 
@@ -314,16 +335,19 @@ def evaluate_models(model, X_test, y_test, y_train):
     MSE = mean_squared_error(y_test, y_pred_n)
     print('Normalise RMSE du model : ', MSE**0.5/(y_test.max().max() - y_test.min().min())*100,'%')
     t = np.arange(len(y_test.iloc[-1, :]))
-    plt.plot(t,y_test.iloc[-1, :], 'r')
-    plt.plot(t,y_pred_n[-1], 'b')
-    plt.show()
+    #plt.plot(t,y_test.iloc[-1, :], 'r')
+    #plt.plot(t,y_pred_n[-1], 'b')
+    #plt.show()
     return MSE**0.5
 
 def evaluate_models_output(model, X_test, y_train):
     y_pred= model.predict(X_test)
     y_pred_n = _unormalize_n(y_pred, y_train)
-    plt.plot(y_pred_n[-1], 'b')
-    plt.show()
+    #plt.plot(y_pred_n[-1], 'b')
+    #plt.show()
+    return y_pred_n
 
 
-
+def concat_final(output1,output2,output3):
+    print(pd.concat((output1,output2,output3)))
+    return pd.concat((output1,output2,output3))

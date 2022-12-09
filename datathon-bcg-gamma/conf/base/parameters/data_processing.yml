@@ -13,4 +13,7 @@ data_processing:
     min_child_weight: 5
     n_estimators: 43
   past_value: 72
+  arc_che: 'Champs-Elysées'
+  arc_conv: 'Convention'
+  arc_peres: 'Saint-Pères'
   output_value: 120

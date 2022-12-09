@@ -5,7 +5,9 @@ generated using Kedro 0.18.3
 
 from kedro.pipeline import Pipeline, node, pipeline
 
-from .nodes import add_days,add_days_input, replace_na, attach_meteo, add_jours_f,prepare_data_for_model_taux, prepare_data_for_model_debit, prepare_input_for_model, train_model, evaluate_models, evaluate_models_output
+from .nodes import add_days,add_days_input, replace_na, attach_meteo, add_jours_f,prepare_data_for_model_taux,\
+    prepare_data_for_model_debit, prepare_input_for_model, train_model, evaluate_models, evaluate_models_output,\
+    reconstruct_output, concat_final
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
@@ -144,23 +146,23 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             func=prepare_input_for_model,
             inputs=['df_champs_elysee_input_days_meteo_bank', 'params:data_processing.past_value'],
-            outputs='X_train_preprocessed_taux_che_inp'
+            outputs=['X_train_preprocessed_taux_che_inp','date_taux_che']
         ),
         node(
             func=prepare_input_for_model,
             inputs=['df_champs_elysee_input_days_meteo_bank', 'params:data_processing.past_value'],
-            outputs='X_train_preprocessed_debit_che_inp'
+            outputs=['X_train_preprocessed_debit_che_inp','date_debit_che']
         ),
         # Convention input
         node(
             func=prepare_input_for_model,
             inputs=['df_convention_input_days_meteo_bank','params:data_processing.past_value'],
-            outputs='X_train_preprocessed_taux_conv_inp'
+            outputs=['X_train_preprocessed_taux_conv_inp','date_taux_conv']
         ),
         node(
             func=prepare_input_for_model,
             inputs=['df_convention_input_days_meteo_bank','params:data_processing.past_value'],
-            outputs='X_train_preprocessed_debit_conv_inp'
+            outputs=['X_train_preprocessed_debit_conv_inp','date_debit_conv']
         ),
         # Convention
         node(
@@ -194,12 +196,12 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             func=prepare_input_for_model,
             inputs=['df_peres_input_days_meteo_bank', 'params:data_processing.past_value'],
-            outputs='X_train_preprocessed_taux_peres_inp'
+            outputs=['X_train_preprocessed_taux_peres_inp','date_taux_peres']
         ),
         node(
             func=prepare_input_for_model,
             inputs=['df_peres_input_days_meteo_bank', 'params:data_processing.past_value'],
-            outputs='X_train_preprocessed_debit_peres_inp'
+            outputs=['X_train_preprocessed_debit_peres_inp','date_debit_peres']
         ),
 
         #train champs
@@ -273,33 +275,66 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             func=evaluate_models_output,
             inputs=['model_taux_che', 'X_train_preprocessed_taux_che_inp', 'y_train_taux_che'],
-            outputs=None
+            outputs='output_taux_che'
         ),
         node(
             func=evaluate_models_output,
             inputs=['model_debit_che', 'X_train_preprocessed_debit_che_inp', 'y_train_debit_che'],
-            outputs=None
+            outputs='output_debit_che'
         ),
         node(
             func=evaluate_models_output,
             inputs=['model_taux_conv', 'X_train_preprocessed_taux_conv_inp', 'y_train_taux_conv'],
-            outputs=None
+            outputs='output_taux_conv'
         ),
         node(
             func=evaluate_models_output,
             inputs=['model_debit_conv', 'X_train_preprocessed_debit_conv_inp', 'y_train_debit_conv'],
-            outputs=None
+            outputs='output_debit_conv'
         ),
         node(
             func=evaluate_models_output,
             inputs=['model_taux_peres', 'X_train_preprocessed_taux_peres_inp', 'y_train_taux_peres'],
-            outputs=None
+            outputs='output_taux_peres'
         ),
         node(
             func=evaluate_models_output,
             inputs=['model_debit_peres', 'X_train_preprocessed_debit_peres_inp',
                     'y_train_debit_peres'],
-            outputs=None
+            outputs='output_debit_peres'
         ),
+
+        # reconstruct output
+        node(
+            func=reconstruct_output,
+            inputs=['output_taux_che', 'output_debit_che', 'date_taux_che', 'params:data_processing.arc_che'],
+            outputs='output_che'
+        ),
+        node(
+            func=reconstruct_output,
+            inputs=['output_taux_conv', 'output_debit_conv', 'date_taux_conv', 'params:data_processing.arc_conv'],
+            outputs='output_conv'
+        ),
+        node(
+            func=reconstruct_output,
+            inputs=['output_taux_peres', 'output_debit_peres', 'date_taux_peres', 'params:data_processing.arc_peres'],
+            outputs='output_peres'
+        ),
+        ## réunir tout en un
+
+        node(
+            func=concat_final,
+            inputs=['output_peres', 'output_che', 'output_conv'],
+            outputs='output_final'
+        ),
+
+        ## Test output
+
+        node(
+            func=concat_final,
+            inputs=['output_peres', 'output_che', 'output_conv'],
+            outputs='output_final'
+        ),
+
     ])
 
