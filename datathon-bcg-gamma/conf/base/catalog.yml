@@ -43,9 +43,7 @@ data_meteo:
 
 data_meteo_input:
   type: pandas.CSVDataSet
-  filepath: data/01_raw/data_meteo.csv
-  load_args:
-    header: 3
+  filepath: data/01_raw/meteo_data_input.csv
 
 data_jours_feries:
   type: pandas.CSVDataSet

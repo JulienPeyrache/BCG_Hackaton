@@ -12,5 +12,5 @@ data_processing:
     max_depth: 8
     min_child_weight: 5
     n_estimators: 43
-  past_value: 48
+  past_value: 72
   output_value: 120

@@ -176,30 +176,29 @@ def _unormalize_n(data, previous):
 
 
 def _input_to_supervised(data, n_in=1, dropnan=True):
-	"""
-	Frame a time series as a supervised learning dataset.
-	Arguments:
-		data: Sequence of observations as a list or NumPy array.
-		n_in: Number of lag observations as input (X).
-		n_out: Number of observations as output (y).
-		dropnan: Boolean whether or not to drop rows with NaN values.
-	Returns:
-		Pandas DataFrame of series framed for supervised learning.
-	"""
+    """
+    Frame a time series as a supervised learning dataset.
+    Arguments:
+    data: Sequence of observations as a list or NumPy array.
+    n_in: Number of lag observations as input (X).
+    n_out: Number of observations as output (y).
+    dropnan: Boolean whether or not to drop rows with NaN values.
+    Returns:
+    Pandas DataFrame of series framed for supervised learning.
+    """
 
-	cols, names = list(), list()
-	# input sequence (t-n, ... t-1)
+    cols, names = list(), list()
+    # input sequence (t-n, ... t-1)
 
-	for i in range(n_in, 0, -1):
-		cols.append(data[["Taux d'occupation",'Débit horaire']].shift(i))
-		names += [('var%d(t-%d)' % (j+1, i)) for j in range(2)]
-	agg = pd.concat(cols, axis=1)
-	agg.columns = names
-	data = data.merge(agg, left_index=True, right_index=True)
-    print(len(data))
-	if dropnan:
-		data.dropna(inplace=True)
-	return data
+    for i in range(n_in, 0, -1):
+        cols.append(data[["Taux d'occupation",'Débit horaire']].shift(i))
+        names += [('var%d(t-%d)' % (j+1, i)) for j in range(2)]
+    agg = pd.concat(cols, axis=1)
+    agg.columns = names
+    data = data.merge(agg, left_index=True, right_index=True)
+    if dropnan:
+        data.dropna(inplace=True)
+    return data
 
 
 ##Fenetrage
@@ -243,10 +242,8 @@ def _create_pipeline(num_col, min_max_col):
     
     return pipeline_master
 
-def prepare_input_for_model(df_model:pd.DataFrame, n_past_values:int) -> Tuple :
-    print(df_model)
-    df_fenetrage = _input_to_supervised(df_model, n_past_values)
-    print(df_fenetrage)
+def prepare_input_for_model(df_model:pd.DataFrame, n_past_values:int):
+    df_fenetrage = _input_to_supervised(df_model, n_past_values, dropnan=False)
     df_fenetrage = df_fenetrage.drop(
         columns=["Taux d'occupation", "Débit horaire", 'Libelle', 'Date et heure de comptage', 'date'])
     min_max_columns_n = ['vacances', 'est_ferie', 'year_2021', 'year_2022', 'hour_0', 'hour_1', 'hour_2', 'hour_3',
@@ -322,7 +319,11 @@ def evaluate_models(model, X_test, y_test, y_train):
     plt.show()
     return MSE**0.5
 
-
+def evaluate_models_output(model, X_test, y_train):
+    y_pred= model.predict(X_test)
+    y_pred_n = _unormalize_n(y_pred, y_train)
+    plt.plot(y_pred_n[-1], 'b')
+    plt.show()
 
 
 
