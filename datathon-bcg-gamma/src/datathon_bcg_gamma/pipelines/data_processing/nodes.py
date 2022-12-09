@@ -292,13 +292,14 @@ def reconstruct_output(output_taux, output_debit, date, arc):
     month =date.month
     year = date.year
     dt_ref = datetime.datetime.combine(datetime.date(year=year, month=month, day=day),
-                                       datetime.time(hour=hour, minute=0, second=0))
+                                       datetime.time(hour=hour, minute=0))
     dt_ref += datetime.timedelta(hours=1)
 
-    start = pd.to_datetime(dt_ref)
+    start = pd.to_datetime(dt_ref, format='%Y-%m-%d %H:%M')
     date = pd.DataFrame(pd.date_range(start, periods=120, freq='1H'))
     df = pd.concat((date, output_debit, output_taux), axis=1)
-    df.columns = ['datetime', 'debit_horraire' ,'taux_occupation']
+    df.columns = ['datetime', 'debit_horaire' ,'taux_occupation']
+    df = df.astype({'datetime': object, 'debit_horaire': float, 'taux_occupation': float})
     df['arc'] = arc
     return df
 
@@ -351,3 +352,29 @@ def evaluate_models_output(model, X_test, y_train):
 def concat_final(output1,output2,output3):
     print(pd.concat((output1,output2,output3)))
     return pd.concat((output1,output2,output3))
+
+def test_output(output):
+    print(output)
+    output_columns = {"arc": object, "datetime": object, "debit_horaire": float,
+                          "taux_occupation": float}
+    # 1. Check relevant columns are in output dataframe assert sorted(list(output_df.columns)) == list(
+    assert sorted(list(output.columns)) == list(
+        output_columns.keys()
+    ), "Some columns are missing or unnecessary columns are in output"  # 2. Check types
+    for col, col_type in output_columns.items():
+        assert output[col].dtype == col_type, f"Column {col} does not have type {col_type}"
+    # 3. Check datetime string has right format
+    try:
+        output.datetime.apply(lambda x: datetime.datetime.strptime(str(x), '%Y-%m-%d %H:%M:%S'))
+    except ValueError as e:
+        raise e
+    # 4. Check `arc` columns has right values
+    assert sorted(list(output["arc"].unique())) == ["Champs-Elysées",
+                                                       "Convention",
+                                                       "Saint-Pères",
+                                                       ], "Output does not have expected unique values for column `arc`"
+    # 5. Check dataframe has right number of rows
+    assert output.shape[0] == 360, f"Expected number of rows is 360, output has {output.shape[0]}"
+
+def dump_csv(df):
+    return df

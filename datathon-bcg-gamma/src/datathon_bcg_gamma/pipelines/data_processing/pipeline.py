@@ -7,7 +7,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from .nodes import add_days,add_days_input, replace_na, attach_meteo, add_jours_f,prepare_data_for_model_taux,\
     prepare_data_for_model_debit, prepare_input_for_model, train_model, evaluate_models, evaluate_models_output,\
-    reconstruct_output, concat_final
+    reconstruct_output, concat_final, test_output, dump_csv
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
@@ -331,9 +331,15 @@ def create_pipeline(**kwargs) -> Pipeline:
         ## Test output
 
         node(
-            func=concat_final,
-            inputs=['output_peres', 'output_che', 'output_conv'],
-            outputs='output_final'
+            func=test_output,
+            inputs='output_final',
+            outputs=None
+        ),
+
+        node(
+            func=dump_csv,
+            inputs='output_final',
+            outputs='output_bcg'
         ),
 
     ])

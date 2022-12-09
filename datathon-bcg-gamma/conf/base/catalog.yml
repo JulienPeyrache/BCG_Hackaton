@@ -5,6 +5,10 @@ data_champs_elysee:
   load_args:
     sep: ";"
 
+output_bcg:
+  type: pandas.CSVDataSet
+  filepath: data/08_reporting/output_bcg.csv
+
 data_peres:
   type: pandas.CSVDataSet
   filepath: data/01_raw/data-peres.csv
