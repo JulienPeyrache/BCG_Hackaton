@@ -47,6 +47,46 @@ def add_days (data_road_row :pd.DataFrame) -> pd.DataFrame:
     data_road_row = data_road_row.drop(columns=['Identifiant arc','Etat arc','Etat trafic','Identifiant noeud amont','Libelle noeud amont','Identifiant noeud aval','Libelle noeud aval','Date debut dispo data','Date fin dispo data','geo_point_2d','geo_shape'])
     return data_road_row
 
+def add_days_input (data_road_row :pd.DataFrame) -> pd.DataFrame:
+    data_road_row['Date et heure de comptage'] = pd.to_datetime(data_road_row['Date et heure de comptage'], utc=True)
+    data_road_row['date'] = data_road_row['Date et heure de comptage'].apply(lambda x : x.date())
+    data_road_row['hour'] = data_road_row['Date et heure de comptage'].apply(lambda x : x.hour)
+    data_road_row['day'] = data_road_row['date'].apply(lambda x : x.day)
+    data_road_row['month'] = data_road_row['date'].apply(lambda x : x.month)
+    data_road_row['year'] = data_road_row['date'].apply(lambda x : x.year)
+    data_road_row['day_of_week'] = data_road_row['Date et heure de comptage'].apply(lambda x : x.day_name())
+    cats = [ 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    cat_type = CategoricalDtype(categories=cats, ordered=True)
+    data_road_row['day_of_week'] = data_road_row['day_of_week'].astype(cat_type)
+    lb = LabelEncoder()
+    # data_road_row['day_of_week_2'] = lb.fit_transform( data_road_row['day_of_week'] )
+    data_road_row = data_road_row.sort_values('Date et heure de comptage')
+    data_road_row['vacances'] = 0
+    mask_1 = (data_road_row['Date et heure de comptage'] > "2021-12-18") & (data_road_row['Date et heure de comptage'] <= "2022-01-04")
+    mask_2 = (data_road_row['Date et heure de comptage'] > "2022-02-19") & (data_road_row['Date et heure de comptage'] <= "2022-03-06")
+    mask_3 = (data_road_row['Date et heure de comptage'] > "2022-04-23") & (data_road_row['Date et heure de comptage'] <= "2022-05-10")
+    mask_4 = (data_road_row['Date et heure de comptage'] > "2022-07-07") & (data_road_row['Date et heure de comptage'] <= "2022-09-02")
+    mask_5 = (data_road_row['Date et heure de comptage'] > "2022-10-22") & (data_road_row['Date et heure de comptage'] <= "2022-11-08")
+    data_road_row.loc[mask_1,"vacances"] = 1
+    data_road_row.loc[mask_2,"vacances"] = 1
+    data_road_row.loc[mask_3,"vacances"] = 1
+    data_road_row.loc[mask_4,"vacances"] = 1
+    data_road_row.loc[mask_5,"vacances"] = 1
+    data_road_row = data_road_row.reset_index()
+    data_road_row = data_road_row.drop('index',axis = 1)
+    data_road_row = data_road_row.drop(columns=['Identifiant arc','Etat arc','Etat trafic','Identifiant noeud amont','Libelle noeud amont','Identifiant noeud aval','Libelle noeud aval','Date debut dispo data','Date fin dispo data','geo_point_2d','geo_shape'])
+    for i in range(1,12):
+        data_road_row[('month_%d' %(i))]=0
+    for i in range(1,4):
+        data_road_row[('day_%d' %(i))]=0
+
+    ## à changer à 9
+    for i in range(8,32):
+        data_road_row[('day_%d' %(i))]=0
+    data_road_row['year_2021']=0
+
+    return data_road_row
+
 # def impute(data_):
 #     #Define a subset of the dataset
 #     data = data_.copy()
@@ -105,7 +145,6 @@ def attach_meteo(data_meteo:pd.DataFrame, df:pd.DataFrame) -> pd.DataFrame:
     data_meteo['DATE'] = pd.to_datetime(data_meteo['DATE'])
     data_meteo['date'] = data_meteo['DATE'].apply(lambda x : x.date())
     data_meteo = data_meteo[['date','MAX_TEMPERATURE_C','MIN_TEMPERATURE_C','WINDSPEED_MAX_KMH','PRECIP_TOTAL_DAY_MM','TOTAL_SNOW_MM','SUNHOUR']]
-    data_meteo
     data_meteo = data_meteo.sort_values('date')
     data_meteo = data_meteo.reset_index()
     data_meteo = data_meteo.drop('index',axis = 1)
@@ -136,8 +175,7 @@ def _unormalize_n(data, previous):
     return (data*previous.std().mean()) + previous.mean().mean()
 
 
-##Fenetrage
-def _series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
+def _input_to_supervised(data, n_in=1, dropnan=True):
 	"""
 	Frame a time series as a supervised learning dataset.
 	Arguments:
@@ -151,24 +189,43 @@ def _series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
 
 	cols, names = list(), list()
 	# input sequence (t-n, ... t-1)
+
 	for i in range(n_in, 0, -1):
 		cols.append(data[["Taux d'occupation",'Débit horaire']].shift(i))
 		names += [('var%d(t-%d)' % (j+1, i)) for j in range(2)]
-	# forecast sequence (t, t+1, ... t+n)
-	for i in range(0, n_out):
-		cols.append(data[["Taux d'occupation",'Débit horaire']].shift(-i))
-		if i == 0:
-			names += [('var%d(t)' % (j+1)) for j in range(2)]
-		else:
-			names += [('var%d(t+%d)' % (j+1, i)) for j in range(2)]
-	# put it all together
 	agg = pd.concat(cols, axis=1)
 	agg.columns = names
 	data = data.merge(agg, left_index=True, right_index=True)
-	# drop rows with NaN values
+    print(len(data))
 	if dropnan:
 		data.dropna(inplace=True)
 	return data
+
+
+##Fenetrage
+
+def _series_to_supervised(data, n_in=1, n_out=1, dropnan=True, is_data=True):
+    cols, names = list(), list()
+    # input sequence (t-n, ... t-1)
+    for i in range(n_in, 0, -1):
+        cols.append(data[["Taux d'occupation",'Débit horaire']].shift(i))
+        names += [('var%d(t-%d)' % (j+1, i)) for j in range(2)]
+    # forecast sequence (t, t+1, ... t+n)
+    for i in range(0, n_out):
+        cols.append(data[["Taux d'occupation",'Débit horaire']].shift(-i))
+        if i == 0:
+            names += [('var%d(t)' % (j+1)) for j in range(2)]
+        else:
+            names += [('var%d(t+%d)' % (j+1, i)) for j in range(2)]
+
+    # put it all together
+    agg = pd.concat(cols, axis=1)
+    agg.columns = names
+    data = data.merge(agg, left_index=True, right_index=True)
+    # drop rows with NaN values
+    if dropnan:
+        data.dropna(inplace=True)
+    return data
 
 
 def _create_pipeline(num_col, min_max_col):
@@ -186,9 +243,31 @@ def _create_pipeline(num_col, min_max_col):
     
     return pipeline_master
 
+def prepare_input_for_model(df_model:pd.DataFrame, n_past_values:int) -> Tuple :
+    print(df_model)
+    df_fenetrage = _input_to_supervised(df_model, n_past_values)
+    print(df_fenetrage)
+    df_fenetrage = df_fenetrage.drop(
+        columns=["Taux d'occupation", "Débit horaire", 'Libelle', 'Date et heure de comptage', 'date'])
+    min_max_columns_n = ['vacances', 'est_ferie', 'year_2021', 'year_2022', 'hour_0', 'hour_1', 'hour_2', 'hour_3',
+                         'hour_4', 'hour_5', 'hour_6', 'hour_7', 'hour_8', 'hour_9', 'hour_10', 'hour_11', 'hour_12',
+                         'hour_13', 'hour_14', 'hour_15', 'hour_16', 'hour_17', 'hour_18', 'hour_19', 'hour_20',
+                         'hour_21', 'hour_22', 'hour_23', 'day_1', 'day_2', 'day_3', 'day_4', 'day_5', 'day_6', 'day_7',
+                         'day_8', 'day_9', 'day_10', 'day_11', 'day_12', 'day_13', 'day_14', 'day_15', 'day_16',
+                         'day_17', 'day_18', 'day_19', 'day_20', 'day_21', 'day_22', 'day_23', 'day_24', 'day_25',
+                         'day_26', 'day_27', 'day_28', 'day_29', 'day_30', 'day_31', 'wday_Monday', 'wday_Tuesday',
+                         'wday_Wednesday', 'wday_Thursday', 'wday_Friday', 'wday_Saturday', 'wday_Sunday', 'month_1',
+                         'month_2', 'month_3', 'month_4', 'month_5', 'month_6', 'month_7', 'month_8', 'month_9',
+                         'month_10', 'month_11', 'month_12']
+    numerical_col_n = [feature for feature in list(df_fenetrage) if feature not in min_max_columns_n]
+    pipeline_n = _create_pipeline(numerical_col_n, min_max_columns_n)
+    input = pipeline_n.fit_transform(df_fenetrage)
+    return input
+
+
 def prepare_data_for_model_taux(df_model:pd.DataFrame, n_past_values:int,n_output:int) -> Tuple:
-    df_fenetrage = _series_to_supervised(df_model,n_past_values, n_output)
-    df_fenetrage = df_fenetrage.drop(columns=["Taux d'occupation","Débit horaire",'Libelle','Date et heure de comptage','date']) 
+    df_fenetrage = _series_to_supervised(df_model,n_past_values,n_output)
+    df_fenetrage = df_fenetrage.drop(columns=["Taux d'occupation","Débit horaire",'Libelle','Date et heure de comptage','date'])
     names_y = ['var1(t)']
     names_y += [('var1(t+%d)' % (i)) for i in range(1,n_output)]
     names_dropping = [('var2(t+%d)' % (i)) for i in range(1,n_output)]
