@@ -4,6 +4,14 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.impute import KNNImputer
 from sklearn.preprocessing import MinMaxScaler
 import random
+from sklearn.model_selection import train_test_split
+from typing import Dict, Tuple
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
+from xgboost import XGBRegressor
+
+import pickle
 
 
 
@@ -94,7 +102,8 @@ def replace_na (data) :
 def attach_meteo(data_meteo:pd.DataFrame, df:pd.DataFrame) -> pd.DataFrame:
     data_meteo['DATE'] = pd.to_datetime(data_meteo['DATE'])
     data_meteo['date'] = data_meteo['DATE'].apply(lambda x : x.date())
-    data_meteo = data_meteo.drop(columns=['DATE','HUMIDITY_MAX_PERCENT','PRESSURE_MAX_MB','CLOUDCOVER_AVG_PERCENT','HEATINDEX_MAX_C','DEWPOINT_MAX_C','WEATHER_CODE_MORNING','WEATHER_CODE_NOON','WEATHER_CODE_EVENING','OPINION','SUNSET','SUNRISE','TEMPERATURE_NIGHT_C']) 
+    data_meteo = data_meteo[['date','MAX_TEMPERATURE_C','MIN_TEMPERATURE_C','WINDSPEED_MAX_KMH','PRECIP_TOTAL_DAY_MM','TOTAL_SNOW_MM','SUNHOUR']]
+    data_meteo
     data_meteo = data_meteo.sort_values('date')
     data_meteo = data_meteo.reset_index()
     data_meteo = data_meteo.drop('index',axis = 1)
@@ -114,3 +123,110 @@ def add_jours_f(jours_feries : pd.DataFrame, df_road: pd.DataFrame):
     df_road = pd.get_dummies(df_road, columns=['day_of_week'], prefix='wday')
     df_road = pd.get_dummies(df_road, columns=['month'], prefix='month')
     return df_road
+
+
+
+
+def _normalize_n(data):
+    return (data - data.mean().mean())/data.std().mean()
+
+def _unormalize_n(data, previous):
+    return (data*previous.std().mean()) + previous.mean().mean()
+
+
+##Fenetrage
+def _series_to_supervised(data, n_in=1, n_out=1, dropnan=True):
+	"""
+	Frame a time series as a supervised learning dataset.
+	Arguments:
+		data: Sequence of observations as a list or NumPy array.
+		n_in: Number of lag observations as input (X).
+		n_out: Number of observations as output (y).
+		dropnan: Boolean whether or not to drop rows with NaN values.
+	Returns:
+		Pandas DataFrame of series framed for supervised learning.
+	"""
+
+	cols, names = list(), list()
+	# input sequence (t-n, ... t-1)
+	for i in range(n_in, 0, -1):
+		cols.append(data[["Taux d'occupation",'Débit horaire']].shift(i))
+		names += [('var%d(t-%d)' % (j+1, i)) for j in range(2)]
+	# forecast sequence (t, t+1, ... t+n)
+	for i in range(0, n_out):
+		cols.append(data[["Taux d'occupation",'Débit horaire']].shift(-i))
+		if i == 0:
+			names += [('var%d(t)' % (j+1)) for j in range(2)]
+		else:
+			names += [('var%d(t+%d)' % (j+1, i)) for j in range(2)]
+	# put it all together
+	agg = pd.concat(cols, axis=1)
+	agg.columns = names
+	data = data.merge(agg, left_index=True, right_index=True)
+	# drop rows with NaN values
+	if dropnan:
+		data.dropna(inplace=True)
+	return data
+
+
+def _create_pipeline(num_col, min_max_col):
+    ##Pipelines Scikit Learn
+    ct_scaler = ColumnTransformer(
+        transformers=[
+            ("scaler", StandardScaler(), num_col),
+            ("scaler_minmax", MinMaxScaler(), min_max_col),
+        ]
+    )
+
+    pipeline_master = Pipeline([
+        ("preprocessor", ct_scaler),
+        ])
+    
+    return pipeline_master
+
+def prepare_data_for_model_taux(df_model:pd.DataFrame, n_past_values:int,n_output:int) -> Tuple:
+    df_fenetrage = _series_to_supervised(df_model,n_past_values, n_output)
+    df_fenetrage = df_fenetrage.drop(columns=["Taux d'occupation","Débit horaire",'Libelle','Date et heure de comptage','date']) 
+    names_y = ['var1(t)']
+    names_y += [('var1(t+%d)' % (i)) for i in range(1,n_output)]
+    names_dropping = [('var2(t+%d)' % (i)) for i in range(1,n_output)]
+    y = df_fenetrage[names_y]
+    X = df_fenetrage.drop(columns=names_y+names_dropping)
+    X_train , X_test ,y_train , y_test = train_test_split(X,y, test_size=0.2)
+    y_train_normalize = _normalize_n(y_train)
+    min_max_columns_n = ['vacances','est_ferie','year_2021','year_2022','hour_0','hour_1','hour_2','hour_3','hour_4','hour_5','hour_6','hour_7','hour_8','hour_9','hour_10','hour_11','hour_12','hour_13','hour_14','hour_15','hour_16','hour_17','hour_18','hour_19','hour_20','hour_21','hour_22','hour_23','day_1','day_2','day_3','day_4','day_5','day_6','day_7','day_8','day_9','day_10','day_11','day_12','day_13','day_14','day_15','day_16','day_17','day_18','day_19','day_20','day_21','day_22','day_23','day_24','day_25','day_26','day_27','day_28','day_29','day_30','day_31','wday_Monday','wday_Tuesday','wday_Wednesday','wday_Thursday','wday_Friday','wday_Saturday','wday_Sunday','month_1','month_2','month_3','month_4','month_5','month_6','month_7','month_8','month_9','month_10','month_11','month_12']
+    numerical_col_n = [feature for feature in list(X) if feature not in min_max_columns_n]
+    pipeline_n = _create_pipeline(numerical_col_n,min_max_columns_n)
+    X_train_preprocessed = pipeline_n.fit_transform(X_train)
+    X_test_preprocessed = pipeline_n.transform(X_test)
+    return X_train_preprocessed, X_test_preprocessed, y_train_normalize, y_train, y_test
+
+
+
+
+def prepare_data_for_model_debit(df_model:pd.DataFrame, n_past_values:int,n_output:int) -> Tuple:
+    df_fenetrage = _series_to_supervised(df_model,n_past_values, n_output)
+    df_fenetrage = df_fenetrage.drop(columns=["Taux d'occupation","Débit horaire",'Libelle','Date et heure de comptage','date']) 
+    names_y = ['var2(t)']
+    names_y += [('var2(t+%d)' % (i)) for i in range(1,n_output)]
+    names_dropping  = [('var1(t+%d)' % (i)) for i in range(1,n_output)]
+    y = df_fenetrage[names_y]
+    X = df_fenetrage.drop(columns=names_y+names_dropping)
+    X_train , X_test ,y_train , y_test = train_test_split(X,y, test_size=0.2)
+    y_train_normalize = _normalize_n(y_train)
+    min_max_columns_n = ['vacances','est_ferie','year_2021','year_2022','hour_0','hour_1','hour_2','hour_3','hour_4','hour_5','hour_6','hour_7','hour_8','hour_9','hour_10','hour_11','hour_12','hour_13','hour_14','hour_15','hour_16','hour_17','hour_18','hour_19','hour_20','hour_21','hour_22','hour_23','day_1','day_2','day_3','day_4','day_5','day_6','day_7','day_8','day_9','day_10','day_11','day_12','day_13','day_14','day_15','day_16','day_17','day_18','day_19','day_20','day_21','day_22','day_23','day_24','day_25','day_26','day_27','day_28','day_29','day_30','day_31','wday_Monday','wday_Tuesday','wday_Wednesday','wday_Thursday','wday_Friday','wday_Saturday','wday_Sunday','month_1','month_2','month_3','month_4','month_5','month_6','month_7','month_8','month_9','month_10','month_11','month_12']
+    numerical_col_n = [feature for feature in list(X) if feature not in min_max_columns_n]
+    pipeline_n = _create_pipeline(numerical_col_n,min_max_columns_n)
+    X_train_preprocessed = pipeline_n.fit_transform(X_train)
+    X_test_preprocessed = pipeline_n.transform(X_test)
+    return X_train_preprocessed, X_test_preprocessed, y_train_normalize, y_train, y_test
+
+
+
+def train_model (X_train:pd.DataFrame,y_train:pd.DataFrame, params_model:Dict):
+    model = XGBRegressor(**params_model)
+    model.fit(X_train, y_train)
+    return model
+
+
+

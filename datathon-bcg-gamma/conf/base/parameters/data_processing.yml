@@ -5,5 +5,12 @@
 # Link: https://kedro.readthedocs.io/en/0.18.3/kedro_project_setup/configuration.html#parameters
 
 
-data_procesing:
+data_processing:
   n_neighboors : 1
+  params_model:
+    colsample_bytree: 0.3
+    max_depth: 8
+    min_child_weight: 5
+    n_estimators: 43
+  past_value: 72
+  output_value: 120

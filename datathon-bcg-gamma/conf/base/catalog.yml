@@ -1,3 +1,4 @@
+
 data_champs_elysee:
   type: pandas.CSVDataSet
   filepath: data/01_raw/data-champs-elysee.csv
@@ -73,3 +74,37 @@ df_convention_days_meteo_bank:
 df_peres_days_meteo_bank:
   type: pandas.ParquetDataSet
   filepath: data/02_intermediate/df_peres_days_meteo_bank.pq
+
+
+
+# Models : 
+
+model_taux_che:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/model_taux_che.pickle
+  versioned: True
+
+model_debit_che:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/model_debit_che.pickle
+  versioned: True
+
+model_taux_conv:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/model_taux_conv.pickle
+  versioned: True
+
+model_debit_conv:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/model_debit_conv.pickle
+  versioned: True
+
+model_taux_peres:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/model_taux_peres.pickle
+  versioned: True
+
+model_debit_peres:
+  type: pickle.PickleDataSet
+  filepath: data/06_models/model_debit_peres.pickle
+  versioned: True
