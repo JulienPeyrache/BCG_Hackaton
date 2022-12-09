@@ -23,19 +23,19 @@ data_convention:
 
 data_input_champs_elysee:
   type: pandas.CSVDataSet
-  filepath: data/01_raw/data-input-che.csv
+  filepath: data/05_model_input/Data_input_che.csv
   load_args:
     sep: ";"
 
 data_input_conv:
   type: pandas.CSVDataSet
-  filepath: data/01_raw/data-input-conv.csv
+  filepath: data/05_model_input/Data_input_convention.csv
   load_args:
     sep: ";"
 
 data_input_sts:
   type: pandas.CSVDataSet
-  filepath: data/01_raw/data-input-sts.csv
+  filepath: data/05_model_input/Data_input_sts.csv
   load_args:
     sep: ";"
 
