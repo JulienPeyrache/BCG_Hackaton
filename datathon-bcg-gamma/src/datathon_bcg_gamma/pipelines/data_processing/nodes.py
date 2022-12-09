@@ -10,8 +10,10 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, MinMaxScaler
 from xgboost import XGBRegressor
-
+from sklearn.metrics import  mean_squared_error
+import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 
 
 
@@ -190,6 +192,7 @@ def prepare_data_for_model_taux(df_model:pd.DataFrame, n_past_values:int,n_outpu
     names_y = ['var1(t)']
     names_y += [('var1(t+%d)' % (i)) for i in range(1,n_output)]
     names_dropping = [('var2(t+%d)' % (i)) for i in range(1,n_output)]
+    names_dropping += ['var2(t)']
     y = df_fenetrage[names_y]
     X = df_fenetrage.drop(columns=names_y+names_dropping)
     X_train , X_test ,y_train , y_test = train_test_split(X,y, test_size=0.2)
@@ -210,9 +213,11 @@ def prepare_data_for_model_debit(df_model:pd.DataFrame, n_past_values:int,n_outp
     names_y = ['var2(t)']
     names_y += [('var2(t+%d)' % (i)) for i in range(1,n_output)]
     names_dropping  = [('var1(t+%d)' % (i)) for i in range(1,n_output)]
+    names_dropping += ['var1(t)']
     y = df_fenetrage[names_y]
     X = df_fenetrage.drop(columns=names_y+names_dropping)
     X_train , X_test ,y_train , y_test = train_test_split(X,y, test_size=0.2)
+    print(list(X_train))
     y_train_normalize = _normalize_n(y_train)
     min_max_columns_n = ['vacances','est_ferie','year_2021','year_2022','hour_0','hour_1','hour_2','hour_3','hour_4','hour_5','hour_6','hour_7','hour_8','hour_9','hour_10','hour_11','hour_12','hour_13','hour_14','hour_15','hour_16','hour_17','hour_18','hour_19','hour_20','hour_21','hour_22','hour_23','day_1','day_2','day_3','day_4','day_5','day_6','day_7','day_8','day_9','day_10','day_11','day_12','day_13','day_14','day_15','day_16','day_17','day_18','day_19','day_20','day_21','day_22','day_23','day_24','day_25','day_26','day_27','day_28','day_29','day_30','day_31','wday_Monday','wday_Tuesday','wday_Wednesday','wday_Thursday','wday_Friday','wday_Saturday','wday_Sunday','month_1','month_2','month_3','month_4','month_5','month_6','month_7','month_8','month_9','month_10','month_11','month_12']
     numerical_col_n = [feature for feature in list(X) if feature not in min_max_columns_n]
@@ -227,6 +232,19 @@ def train_model (X_train:pd.DataFrame,y_train:pd.DataFrame, params_model:Dict):
     model = XGBRegressor(**params_model)
     model.fit(X_train, y_train)
     return model
+
+def evaluate_models(model, X_test, y_test, y_train):
+    y_pred= model.predict(X_test)
+    y_pred_n = _unormalize_n(y_pred, y_train)
+    MSE = mean_squared_error(y_test, y_pred_n)
+    print('Normalise RMSE du model : ', MSE**0.5/(y_test.max().max() - y_test.min().min()))
+    t = np.arange(len(y_test.iloc[-1, :]))
+    plt.plot(t,y_test.iloc[-1, :], 'r')
+    plt.plot(t,y_pred_n[-1], 'b')
+    plt.show()
+    return MSE**0.5
+
+
 
 
 

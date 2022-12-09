@@ -5,7 +5,7 @@ generated using Kedro 0.18.3
 
 from kedro.pipeline import Pipeline, node, pipeline
 
-from .nodes import add_days, replace_na, attach_meteo, add_jours_f,prepare_data_for_model_taux, prepare_data_for_model_debit, train_model
+from .nodes import add_days, replace_na, attach_meteo, add_jours_f,prepare_data_for_model_taux, prepare_data_for_model_debit, train_model, evaluate_models
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
@@ -104,37 +104,67 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs=['X_train_preprocessed_debit_peres', 'X_test_preprocessed_debit_peres', 'y_train_normalize_debit_peres', 'y_train_debit_peres', 'y_test_debit_peres']
         ),
         #train champs
+        # node(
+        #     func=train_model,
+        #     inputs=['X_train_preprocessed_taux_che','y_train_normalize_taux_che','params:data_processing.params_model'],
+        #     outputs='model_taux_che'
+        # ),
+        # node(
+        #     func=train_model,
+        #     inputs=['X_train_preprocessed_debit_che','y_train_normalize_debit_che','params:data_processing.params_model'],
+        #     outputs='model_debit_che'
+        # ),
+        # #train convention
+        # node(
+        #     func=train_model,
+        #     inputs=['X_train_preprocessed_taux_conv','y_train_normalize_taux_conv','params:data_processing.params_model'],
+        #     outputs='model_taux_conv'
+        # ),
+        # node(
+        #     func=train_model,
+        #     inputs=['X_train_preprocessed_debit_conv','y_train_normalize_debit_conv','params:data_processing.params_model'],
+        #     outputs='model_debit_conv'
+        # ),
+        # #train st peres
+        # node(
+        #     func=train_model,
+        #     inputs=['X_train_preprocessed_taux_peres','y_train_normalize_taux_peres','params:data_processing.params_model'],
+        #     outputs='model_taux_peres'
+        # ),
+        # node(
+        #     func=train_model,
+        #     inputs=['X_train_preprocessed_debit_peres','y_train_normalize_debit_peres','params:data_processing.params_model'],
+        #     outputs='model_debit_peres'
+        # ),
         node(
-            func=train_model,
-            inputs=['X_train_preprocessed_taux_che','y_train_normalize_taux_che','params:data_processing.params_model'],
-            outputs='model_taux_che'
+            func=evaluate_models,
+            inputs=['model_taux_che','X_test_preprocessed_taux_che','y_test_taux_che','y_train_taux_che' ],
+            outputs='RMSE_taux_che'
         ),
         node(
-            func=train_model,
-            inputs=['X_train_preprocessed_debit_che','y_train_normalize_debit_che','params:data_processing.params_model'],
-            outputs='model_debit_che'
-        ),
-        #train convention
-        node(
-            func=train_model,
-            inputs=['X_train_preprocessed_taux_conv','y_train_normalize_taux_conv','params:data_processing.params_model'],
-            outputs='model_taux_conv'
+            func=evaluate_models,
+            inputs=['model_debit_che','X_test_preprocessed_debit_che','y_test_debit_che','y_train_debit_che' ],
+            outputs='RMSE_debit_che'
         ),
         node(
-            func=train_model,
-            inputs=['X_train_preprocessed_debit_conv','y_train_normalize_debit_conv','params:data_processing.params_model'],
-            outputs='model_debit_conv'
-        ),
-        #train st peres
-        node(
-            func=train_model,
-            inputs=['X_train_preprocessed_taux_peres','y_train_normalize_taux_peres','params:data_processing.params_model'],
-            outputs='model_taux_peres'
+            func=evaluate_models,
+            inputs=['model_taux_conv','X_test_preprocessed_taux_conv','y_test_taux_conv','y_train_taux_conv' ],
+            outputs='RMSE_taux_conv'
         ),
         node(
-            func=train_model,
-            inputs=['X_train_preprocessed_debit_peres','y_train_normalize_debit_peres','params:data_processing.params_model'],
-            outputs='model_debit_peres'
+            func=evaluate_models,
+            inputs=['model_debit_conv','X_test_preprocessed_debit_conv','y_test_debit_conv','y_train_debit_conv' ],
+            outputs='RMSE_debit_conv'
+        ),
+        node(
+            func=evaluate_models,
+            inputs=['model_taux_peres','X_test_preprocessed_taux_peres','y_test_taux_peres','y_train_taux_peres' ],
+            outputs='RMSE_taux_peres'
+        ),
+        node(
+            func=evaluate_models,
+            inputs=['model_debit_peres','X_test_preprocessed_debit_peres','y_test_debit_peres','y_train_debit_peres' ],
+            outputs='RMSE_debit_peres'
         )
     ])
 
