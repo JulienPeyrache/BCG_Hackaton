@@ -30,6 +30,26 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs='df_champs_elysee_days_meteo_bank'
         ),
         node(
+            func=add_days,
+            inputs="data_input_champs_elysee",
+            outputs="champs_elysee_input_with_days"
+        ),
+        node(
+            func=replace_na,
+            inputs="champs_elysee_input_with_days",
+            outputs="champs_elysee_input_with_days_na_filled"
+        ),
+        node(
+            func=attach_meteo,
+            inputs=['data_meteo', 'champs_elysee_input_with_days_na_filled'],
+            outputs='df_champs_elysee_input_days_meteo'
+        ),
+        node(
+            func=add_jours_f,
+            inputs=['data_jours_feries', 'df_champs_elysee_input_days_meteo'],
+            outputs='df_champs_elysee_input_days_meteo_bank'
+        ),
+        node(
             func = add_days,
             inputs="data_convention",
             outputs="convention_with_days"
@@ -50,6 +70,26 @@ def create_pipeline(**kwargs) -> Pipeline:
             outputs='df_convention_days_meteo_bank'
         ),
         node(
+            func=add_days,
+            inputs="data_input_conv",
+            outputs="convention_input_with_days"
+        ),
+        node(
+            func=replace_na,
+            inputs="convention_input_with_days",
+            outputs="convention_input_with_days_na_filled"
+        ),
+        node(
+            func=attach_meteo,
+            inputs=['data_meteo', 'convention_input_with_days_na_filled'],
+            outputs='df_convention_input_days_meteo'
+        ),
+        node(
+            func=add_jours_f,
+            inputs=['data_jours_feries', 'df_convention_input_days_meteo'],
+            outputs='df_convention_input_days_meteo_bank'
+        ),
+        node(
             func = add_days,
             inputs="data_peres",
             outputs="peres_with_days"
@@ -68,6 +108,26 @@ def create_pipeline(**kwargs) -> Pipeline:
             func=add_jours_f,
             inputs=['data_jours_feries','df_peres_days_meteo'],
             outputs='df_peres_days_meteo_bank'
+        ),
+        node(
+            func=add_days,
+            inputs="data_input_sts",
+            outputs="peres_input_with_days"
+        ),
+        node(
+            func=replace_na,
+            inputs="peres_input_with_days",
+            outputs="peres_input_with_days_na_filled"
+        ),
+        node(
+            func=attach_meteo,
+            inputs=['data_meteo', 'peres_input_with_days_na_filled'],
+            outputs='df_peres_input_days_meteo'
+        ),
+        node(
+            func=add_jours_f,
+            inputs=['data_jours_feries', 'df_peres_input_days_meteo'],
+            outputs='df_peres_input_days_meteo_bank'
         ),
         #Champs
         node(
