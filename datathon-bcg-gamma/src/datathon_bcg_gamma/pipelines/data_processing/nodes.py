@@ -88,44 +88,6 @@ def add_days_input (data_road_row :pd.DataFrame) -> pd.DataFrame:
 
     return data_road_row
 
-# def impute(data_):
-#     #Define a subset of the dataset
-#     data = data_.copy()
-#     df_knn = data.filter(['hour','day','month','year','day_of_week_2', 'Débit horaire', "Taux d'occupation"]).copy()
-
-#     # Define scaler to set values between 0 and 1
-#     scaler = MinMaxScaler(feature_range=(0, 1))
-#     df_knn = pd.DataFrame(scaler.fit_transform(df_knn), columns = df_knn.columns)
-
-#     # Define KNN imputer and fill missing values
-#     knn_imputer = KNNImputer(n_neighbors=2, weights='uniform', metric ='nan_euclidean')
-#     df_knn_imputed = pd.DataFrame(knn_imputer.fit_transform(df_knn), columns=df_knn.columns)
-#     inversed = pd.DataFrame(scaler.inverse_transform(df_knn_imputed))
-#     data_['filled_tx_occup'] = inversed[5]
-#     data_['filled_debit'] = inversed[4]
-
-#     return data_
-
-
-# def impute(data_:pd.DataFrame,n:int) -> pd.DataFrame:
-#     #Define a subset of the dataset
-#     name_hour = ['hour_%d' % (i) for i in range(0,24) ]
-#     name_month = ['day_%d' % (i) for i in range(1,32) ]
-#     data = data_.copy()
-#     df_knn = data.filter(['Débit horaire', "Taux d'occupation"] + name_hour).copy()
-
-#     # Define scaler to set values between 0 and 1
-#     scaler = MinMaxScaler(feature_range=(0, 1))
-#     df_knn = pd.DataFrame(scaler.fit_transform(df_knn), columns = df_knn.columns)
-
-#     # Define KNN imputer and fill missing values
-#     knn_imputer = KNNImputer(n_neighbors=n, weights='distance', metric ='nan_euclidean')
-#     df_knn_imputed = pd.DataFrame(knn_imputer.fit_transform(df_knn), columns=df_knn.columns)
-#     inversed = pd.DataFrame(scaler.inverse_transform(df_knn_imputed))
-
-#     data['filled_tx_occup'] = inversed[1]
-#     data['filled_debit'] = inversed[0]
-#     return data
 
 def replace_na (data) : 
     index_taux = data.loc[data["Taux d'occupation"].isna()].index
@@ -263,6 +225,7 @@ def prepare_input_for_model(df_model:pd.DataFrame, n_past_values:int):
     numerical_col_n = [feature for feature in list(df_fenetrage) if feature not in min_max_columns_n]
     pipeline_n = _create_pipeline(numerical_col_n, min_max_columns_n)
     input = pipeline_n.fit_transform(df_fenetrage)
+    print(date)
     return input, date
 
 
@@ -283,6 +246,7 @@ def prepare_data_for_model_taux(df_model:pd.DataFrame, n_past_values:int,n_outpu
     X_train_preprocessed = pipeline_n.fit_transform(X_train)
     X_test_preprocessed = pipeline_n.transform(X_test)
     return X_train_preprocessed, X_test_preprocessed, y_train_normalize, y_train, y_test
+
 
 def reconstruct_output(output_taux, output_debit, date, arc):
     if len(np.shape(output_taux)) > 1:
@@ -352,7 +316,6 @@ def evaluate_models_output(model, X_test, y_train):
 
 
 def concat_final(output1,output2,output3):
-    print(pd.concat((output1,output2,output3)))
     return pd.concat((output1,output2,output3))
 
 def test_output(output):
