@@ -119,7 +119,6 @@ def add_jours_f(jours_feries : pd.DataFrame, df_road: pd.DataFrame):
     jours_feries[["year", "month", "day"]] = pd.DataFrame(jours_feries["date"].str.split("-").to_list()).astype('int')
     jours_feries.drop(columns=["date", "annee", "zone", "nom_jour_ferie"], inplace=True)
     jours_feries["est_ferie"] = 1
-    print(list(df_road))
     df_road = df_road.merge(jours_feries, on=["year", "month", "day"], how='left')
     df_road['est_ferie'].fillna(0, inplace=True)
     df_road = pd.get_dummies(df_road, columns=['year'], prefix='year')
@@ -225,7 +224,6 @@ def prepare_input_for_model(df_model:pd.DataFrame, n_past_values:int):
     numerical_col_n = [feature for feature in list(df_fenetrage) if feature not in min_max_columns_n]
     pipeline_n = _create_pipeline(numerical_col_n, min_max_columns_n)
     input = pipeline_n.fit_transform(df_fenetrage)
-    print(date)
     return input, date
 
 
@@ -319,7 +317,6 @@ def concat_final(output1,output2,output3):
     return pd.concat((output1,output2,output3))
 
 def test_output(output):
-    print(output)
     output_columns = {"arc": object, "datetime": object, "debit_horaire": float,
                           "taux_occupation": float}
     # 1. Check relevant columns are in output dataframe assert sorted(list(output_df.columns)) == list(
