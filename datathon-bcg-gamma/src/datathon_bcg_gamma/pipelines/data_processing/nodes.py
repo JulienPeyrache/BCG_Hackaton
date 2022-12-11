@@ -76,15 +76,15 @@ def add_days_input (data_road_row :pd.DataFrame) -> pd.DataFrame:
     data_road_row = data_road_row.reset_index()
     data_road_row = data_road_row.drop('index',axis = 1)
     data_road_row = data_road_row.drop(columns=['Identifiant arc','Etat arc','Etat trafic','Identifiant noeud amont','Libelle noeud amont','Identifiant noeud aval','Libelle noeud aval','Date debut dispo data','Date fin dispo data','geo_point_2d','geo_shape'])
-    for i in range(1,12):
-        data_road_row[('month_%d' %(i))]=0
-    for i in range(1,4):
-        data_road_row[('day_%d' %(i))]=0
+    # for i in range(1,12):
+    #     data_road_row[('month_%d' %(i))]=0
+    # for i in range(1,4):
+    #     data_road_row[('day_%d' %(i))]=0
 
-    ## à changer à 9
-    for i in range(8,32):
-        data_road_row[('day_%d' %(i))]=0
-    data_road_row['year_2021']=0
+    # ## à changer à 9
+    # for i in range(8,32):
+    #     data_road_row[('day_%d' %(i))]=0
+    # data_road_row['year_2021']=0
 
     return data_road_row
 
@@ -157,6 +157,7 @@ def add_jours_f(jours_feries : pd.DataFrame, df_road: pd.DataFrame):
     jours_feries[["year", "month", "day"]] = pd.DataFrame(jours_feries["date"].str.split("-").to_list()).astype('int')
     jours_feries.drop(columns=["date", "annee", "zone", "nom_jour_ferie"], inplace=True)
     jours_feries["est_ferie"] = 1
+    print(list(df_road))
     df_road = df_road.merge(jours_feries, on=["year", "month", "day"], how='left')
     df_road['est_ferie'].fillna(0, inplace=True)
     df_road = pd.get_dummies(df_road, columns=['year'], prefix='year')
@@ -164,6 +165,7 @@ def add_jours_f(jours_feries : pd.DataFrame, df_road: pd.DataFrame):
     df_road = pd.get_dummies(df_road, columns=['day'], prefix='day')
     df_road = pd.get_dummies(df_road, columns=['day_of_week'], prefix='wday')
     df_road = pd.get_dummies(df_road, columns=['month'], prefix='month')
+    
     return df_road
 
 
