@@ -18,4 +18,4 @@ Dans le dossier notebooks/ vous trouverez un notebook "Explication_notebook" qui
  
 ![Che_plot](https://user-images.githubusercontent.com/119620148/207013142-4c469add-175c-4542-a038-aaae7d18e7fe.png)
 ![convention_plot](https://user-images.githubusercontent.com/119620148/207013147-2fc8679d-6813-462a-8360-262e3d311274.png)
-![sts_plot](https://user-images.githubusercontent.com/119620148/207013161-4f709aa5-ad74-49d1-845c-2989e1254de5.png)
+![sts_plot](https://user-images.githubusercontent.com/119620148/207036649-947aedd2-927f-4d2d-84b4-97e4c12ec8d2.png)
