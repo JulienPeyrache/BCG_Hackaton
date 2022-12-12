@@ -7,7 +7,7 @@ from kedro.pipeline import Pipeline, node, pipeline
 
 from .nodes import add_days,add_days_input, replace_na, attach_meteo, add_jours_f,prepare_data_for_model_taux,\
     prepare_data_for_model_debit, prepare_input_for_model, train_model, evaluate_models, evaluate_models_output,\
-    reconstruct_output, concat_final, test_output, dump_csv
+    reconstruct_output, concat_final, test_output, dump_csv,plot_results
 
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
@@ -242,32 +242,32 @@ def create_pipeline(**kwargs) -> Pipeline:
         node(
             func=evaluate_models,
             inputs=['model_taux_che','X_test_preprocessed_taux_che','y_test_taux_che','y_train_taux_che' ],
-            outputs='RMSE_taux_che'
+            outputs=['RMSE_taux_che','y_pred_taux_che']
         ),
         node(
             func=evaluate_models,
             inputs=['model_debit_che','X_test_preprocessed_debit_che','y_test_debit_che','y_train_debit_che' ],
-            outputs='RMSE_debit_che'
+            outputs=['RMSE_debit_che','y_pred_debit_che']
         ),
         node(
             func=evaluate_models,
             inputs=['model_taux_conv','X_test_preprocessed_taux_conv','y_test_taux_conv','y_train_taux_conv' ],
-            outputs='RMSE_taux_conv'
+            outputs=['RMSE_taux_conv','y_pred_taux_conv']
         ),
         node(
             func=evaluate_models,
             inputs=['model_debit_conv','X_test_preprocessed_debit_conv','y_test_debit_conv','y_train_debit_conv' ],
-            outputs='RMSE_debit_conv'
+            outputs=['RMSE_debit_conv','y_pred_debit_conv']
         ),
         node(
             func=evaluate_models,
             inputs=['model_taux_peres','X_test_preprocessed_taux_peres','y_test_taux_peres','y_train_taux_peres' ],
-            outputs='RMSE_taux_peres'
+            outputs=['RMSE_taux_peres','y_pred_taux_peres']
         ),
         node(
             func=evaluate_models,
             inputs=['model_debit_peres','X_test_preprocessed_debit_peres','y_test_debit_peres','y_train_debit_peres' ],
-            outputs='RMSE_debit_peres'
+            outputs=['RMSE_debit_peres','y_pred_debit_peres']
             ),
 
         # evaluation output
@@ -341,6 +341,20 @@ def create_pipeline(**kwargs) -> Pipeline:
             inputs='output_final',
             outputs='output_bcg'
         ),
-
+        node(
+            func=plot_results,
+            inputs=['y_pred_taux_che','y_test_taux_che','y_pred_debit_che','y_test_debit_che','output_taux_che','output_debit_che','RMSE_taux_che','RMSE_debit_che','params:data_processing.arc_che'],
+            outputs='figure_che'
+        ),
+        node(
+            func=plot_results,
+            inputs=['y_pred_taux_conv','y_test_taux_conv','y_pred_debit_conv','y_test_debit_conv','output_taux_conv','output_debit_conv','RMSE_taux_conv','RMSE_debit_conv','params:data_processing.arc_conv'],
+            outputs='figure_conv'
+        ),
+        node(
+            func=plot_results,
+            inputs=['y_pred_taux_peres','y_test_taux_peres','y_pred_debit_peres','y_test_debit_peres','output_taux_peres','output_debit_peres','RMSE_taux_peres','RMSE_debit_peres','params:data_processing.arc_peres'],
+            outputs='figure_peres'
+        )
     ])
 

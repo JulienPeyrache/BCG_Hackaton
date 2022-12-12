@@ -298,12 +298,13 @@ def evaluate_models(model, X_test, y_test, y_train):
     y_pred= model.predict(X_test)
     y_pred_n = _unormalize_n(y_pred, y_train)
     MSE = mean_squared_error(y_test, y_pred_n)
-    print('Normalise RMSE du model : ', MSE**0.5/(y_test.max().max() - y_test.min().min())*100,'%')
-    t = np.arange(len(y_test.iloc[-1, :]))
-    #plt.plot(t,y_test.iloc[-1, :], 'r')
-    #plt.plot(t,y_pred_n[-1], 'b')
-    #plt.show()
-    return MSE**0.5
+    MSE_n = MSE**0.5/(y_test.max().max() - y_test.min().min())*100
+    print('Normalise RMSE du model : ', MSE_n,'%')
+    # t = np.arange(len(y_test.iloc[-1, :]))
+    # fig = plt.figure()
+    # plt.plot(t,y_test.iloc[-1, :], 'r')
+    # plt.plot(t,y_pred_n[-1], 'b')
+    return MSE_n, y_pred_n
 
 def evaluate_models_output(model, X_test, y_train):
     y_pred= model.predict(X_test)
@@ -311,6 +312,28 @@ def evaluate_models_output(model, X_test, y_train):
     #plt.plot(y_pred_n[-1], 'b')
     #plt.show()
     return y_pred_n
+
+def plot_results(y_taux_test_pred,y_test_taux,y_debit_test_pred,y_test_debit, y_taux_pred, y_debit_pred, RMSE_taux, RMSE_debit,route):
+    figure, axis = plt.subplots(2, 2)
+    t = np.arange(len(y_taux_test_pred[-1]))
+    axis[0,0].plot(t,y_test_taux.iloc[-1,:],'b')
+    axis[0,0].plot(t,y_taux_test_pred[-1],'r')
+    axis[0,0].set_title("Comparaison du taux d'occupation en test set et prediction set \n sur "+ route +" avec une RMSE normalisée de %d%%" %(RMSE_taux))
+    axis[0,0].legend(['Real data','Predicted data'])
+
+    axis[0,1].plot(t,y_test_debit.iloc[-1,:],'b')
+    axis[0,1].plot(t,y_debit_test_pred[-1],'r')
+    axis[0,1].set_title("Comparaison du débit horaire en test set et prediction set \n sur "+ route +" avec une RMSE normalisée de %d%%" %(RMSE_debit))
+    axis[0,1].legend(['Real data','Predicted data'])
+
+    axis[1,0].plot(y_taux_pred[-1])
+    axis[1,0].set_title("Visualisation de la prédiction du \n taux d'occupation du 09/12 au 13/12 sur " + route)
+
+    axis[1,1].plot(y_debit_pred[-1])
+    axis[1,1].set_title("Visualisation de la prédiction du \n débit horaire du 09/12 au 13/12 sur " + route)
+    plt.show()
+    return figure
+
 
 
 def concat_final(output1,output2,output3):
