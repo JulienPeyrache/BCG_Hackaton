@@ -23,5 +23,57 @@ Documentation research :
             Supprimer les vacances dans un premier temps 
             ++ Utiliser les données des autres segments qui donnent sur les route (DATA LEAKAGE)
             Il faut regarder les performances des algos sur plusieurs échelle de temps : (Prediction dans 1 heures / 2 heures / 24 heures )
+            Données de chantier dans Paris (pas de chantier) 
+            Données de fermeture de voirie
+            Passage pietons 
+            Paris respire journée sans voiture
+            Feu de signialisation
+            Vacances scolaire 
+            Météo 
+            
 
-Q&A 
+
+
+Q&A Sessions : 
+    Rendu : Slides pas d'évocation de la partie code ? Le but ?  API sur plus de 12 mois ! Reduire le test 
+    Missing time series, comment les remplacer ? 
+    ML obligatoirement ou Timeseries ok ? 
+
+    Doser la partie technique, donc expliquer ce qu'on a fait 
+    Quelle message passer ? Optimer la vente donc avec cette outil de prédiction 
+    Pourquoi l'état du traffic est clé ?
+    Large et après zoomer
+    Quantifier l'impact du traffic, reprendre le dec et du chiffrage 
+
+    Comment savoir que l'algo marche dans le temps 
+
+
+Business Presentation : 
+    2 aspects : 
+        - Prediction optimal du nombre de driver à book par jour pour 2 semaines (Tourne tous les x pour prédire la suite)
+        - Création des feuilles de routes pour chaque driver la vieille pour le lendemain
+
+    POC (Chiffrer l'apport de notre solution):
+        - Analyser la solution mise en place base
+    
+    Detail de l'algorithme : 
+        - 
+
+    Futur : 
+        - Visibilité donc implémentation de features plus complexe (livraison express) 
+        - Visibilité sur l'heure de livraison précise pour que le client ne soit pas bloqué toute la journée chez lui 
+
+
+    Slide : 1
+
+    Slide : 2
+    
+    Slide : 3
+
+    Slide : 4
+
+    Slide : 5
+
+    Slide : 6
+
+    Slide : 7
